@@ -5,14 +5,15 @@ let cityNames;
 let markovData = {};
 let loadedNames = 0;
 let loadedMarkov = 0;
+let result = document.querySelector("#result");
 start();
 
 function refreshLoading() {
-    document.getElementById("result").innerText = "Chargement " + Math.round((loadedNames + loadedMarkov) * 50) + "%";
+    result.innerText = "Chargement " + Math.round((loadedNames + loadedMarkov) * 50) + "%";
 }
 
 function onResize() {
-    document.querySelector("body").style.height = window.innerHeight + 'px'; //"hack" for safari ios
+    document.body.style.height = window.innerHeight + 'px'; //"hack" for safari ios
 }
 
 async function start() {
@@ -20,21 +21,18 @@ async function start() {
     window.addEventListener("resize", onResize);
     refreshLoading();
     try {
-        await Promise.all([
+        let [noms, markov] = await Promise.all([
             loadJSON("noms.json", (p) => loadedNames = p.loaded / (p.total || 527807)),
-            loadJSON("markov.json", (p) => loadedMarkov = p.loaded / (p.total || 1760271))])
-            .then(([noms, markov]) => {
-                cityNames = JSON.parse(noms);
-                markovData = JSON.parse(markov);
-            });
+            loadJSON("markov.json", (p) => loadedMarkov = p.loaded / (p.total || 1760271))]);
+        cityNames = JSON.parse(noms);
+        markovData = JSON.parse(markov);
     } catch (e) {
         console.error(e);
     }
     onClick();
     let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
-    let body = document.getElementsByTagName("body")[0];
-    body.addEventListener(touchEvent, onClick);
-    body.addEventListener("keydown", event => {
+    document.body.addEventListener(touchEvent, onClick);
+    document.body.addEventListener("keydown", event => {
         if (event.key === "Spacebar" || event.key === " " || event.key === "ArrowRight" || event.key === "ArrowLeft" || event.key === "ArrowUp" || event.key === "ArrowDown") {
             onClick();
         }
@@ -77,10 +75,11 @@ function substrOrNullChar(str, index, length) { //Returns substring, negative in
     return result;
 }
 
-function onClick() {
+async function onClick() {
     fadeOut();
     let rand = getRandomName();
-    delay(100).then(() => setAndFadeIn(rand));
+    await delay(100);
+    setAndFadeIn(rand);
 }
 
 async function delay(ms) {
@@ -88,7 +87,7 @@ async function delay(ms) {
 }
 
 function setAndFadeIn(str) {
-    document.getElementById("result").innerText = str;
+    result.innerText = str;
     fadeIn();
 }
 
@@ -142,11 +141,11 @@ function getRandomName() {
 }
 
 function fadeOut() {
-    document.querySelector("body").style.color = "white";
+    document.body.style.color = "white";
 }
 
 function fadeIn() {
-    document.querySelector("body").style.color = "black";
+    document.body.style.color = "black";
 }
 
 function getNextLetter(token) {
